@@ -143,12 +143,12 @@ def get_data_from_files(planning_file=None, findings_file=None):
 
 # 初始化 session state
 if 'planning_df' not in st.session_state:
-    # 尝试从本地文件加载，如果失败则创建空 DataFrame（等待用户上传）
+    # 尝试从本地文件加载
     try:
         planning_df, findings_df, dept_stats = get_data_from_files()
         st.session_state.has_data = True
     except FileNotFoundError:
-        # 文件不存在，创建空 DataFrame
+        # 文件不存在，创建空 DataFrame（等待用户上传）
         planning_df = pd.DataFrame()
         findings_df = pd.DataFrame()
         dept_stats = pd.DataFrame()
@@ -163,7 +163,7 @@ planning_df = st.session_state.planning_df
 findings_df = st.session_state.findings_df
 dept_stats = st.session_state.dept_stats
 
-# 检查是否有数据
+# 检查是否有数据（只在本地开发且无文件时显示上传提示）
 if not st.session_state.get('has_data', False) or len(findings_df) == 0:
     st.info("📢 **欢迎使用 2026 内审看板！**")
     st.markdown("""
@@ -175,7 +175,7 @@ if not st.session_state.get('has_data', False) or len(findings_df) == 0:
     
     上传后看板将自动加载并显示数据。
     """)
-    st.stop()  # 停止渲染后续内容
+    # 不 stop，继续显示上传界面
 
 # ==================== 侧边栏 ====================
 st.sidebar.markdown("""
