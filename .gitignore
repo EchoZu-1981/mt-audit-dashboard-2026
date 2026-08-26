@@ -39,9 +39,9 @@ wheels/
 .DS_Store
 Thumbs.db
 
-# Excel 数据文件（通过上传功能加载）
-*.xlsx
-*.xls
+# Excel 数据文件（上传到 GitHub 供 Streamlit Cloud 使用）
+# *.xlsx
+# *.xls
 
 # 部署指南（可选，如果需要可以保留）
 # DEPLOYMENT.md
