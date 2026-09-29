@@ -47,6 +47,11 @@ Thumbs.db
 # HTML export (regenerated)
 audit_dashboard_2026.html
 
+# Package output
+dist/
+package.py
+打包.bat
+
 # IDE
 .vscode/
 .idea/
