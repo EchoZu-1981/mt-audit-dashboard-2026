@@ -6,6 +6,7 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 develop-eggs/
@@ -23,11 +24,28 @@ wheels/
 .installed.cfg
 *.egg
 
-# Streamlit
-.streamlit/
+# Streamlit (keep config.toml)
+.streamlit/*.py
+!.streamlit/config.toml
 
 # Jupyter Notebook
 .ipynb_checkpoints
+
+# Local temp files
+.tmp_data/
+*_local.xlsx
+
+# IDE
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# HTML export (regenerated)
+audit_dashboard_2026.html
 
 # IDE
 .vscode/

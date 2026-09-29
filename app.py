@@ -130,15 +130,32 @@ st.markdown("""
 
 # ==================== 加载数据 ====================
 def get_data_from_files(planning_file=None, findings_file=None):
-    """从文件加载数据"""
-    base_dir = r"C:\Users\zu-5\OneDrive - Mettler Toledo LLC\05 QMS Projects\20 QM AI Assistant Agency\Internal audit dashboard"
+    """从文件加载数据（支持本地 OneDrive 和 Streamlit Cloud 两种环境）"""
+    import shutil
+    base_dir = os.path.dirname(os.path.abspath(__file__))
     
     if planning_file is None:
-        planning_file = os.path.join(base_dir, '2026 Audit Planning_V1_20260821.xlsx')
+        # 优先从 data/ 目录读取（Streamlit Cloud 部署）
+        data_planning = os.path.join(base_dir, 'data', '2026 Audit Planning_V1_20260821.xlsx')
+        planning_file = data_planning if os.path.exists(data_planning) else os.path.join(base_dir, '2026 Audit Planning_V1_20260821.xlsx')
     if findings_file is None:
-        findings_file = os.path.join(base_dir, '2026内审发现项跟进表.xlsx')
+        data_findings = os.path.join(base_dir, 'data', '2026年内审发现跟进表.xlsx')
+        findings_file = data_findings if os.path.exists(data_findings) else os.path.join(base_dir, '2026年内审发现跟进表.xlsx')
     
-    return load_all_data_from_files(planning_file, findings_file)
+    # 在本地 OneDrive 环境下，复制到临时副本避免文件锁定
+    tmp_dir = os.path.join(base_dir, '.tmp_data')
+    os.makedirs(tmp_dir, exist_ok=True)
+    
+    tmp_planning = os.path.join(tmp_dir, os.path.basename(planning_file))
+    tmp_findings = os.path.join(tmp_dir, os.path.basename(findings_file))
+    
+    try:
+        shutil.copy2(planning_file, tmp_planning)
+        shutil.copy2(findings_file, tmp_findings)
+        return load_all_data_from_files(tmp_planning, tmp_findings)
+    except PermissionError:
+        # 如果复制失败，尝试直接读取
+        return load_all_data_from_files(planning_file, findings_file)
 
 
 # 初始化 session state
@@ -164,7 +181,9 @@ findings_df = st.session_state.findings_df
 dept_stats = st.session_state.dept_stats
 
 # 检查是否有数据（只在本地开发且无文件时显示上传提示）
-if not st.session_state.get('has_data', False) or len(findings_df) == 0:
+show_sidebar_and_dashboard = st.session_state.get('has_data', False) and len(findings_df) > 0 and len(planning_df) > 0
+
+if not show_sidebar_and_dashboard:
     st.info("📢 **欢迎使用 2026 内审看板！**")
     st.markdown("""
     ### 请先上传数据文件
@@ -175,7 +194,6 @@ if not st.session_state.get('has_data', False) or len(findings_df) == 0:
     
     上传后看板将自动加载并显示数据。
     """)
-    # 不 stop，继续显示上传界面
 
 # ==================== 侧边栏 ====================
 st.sidebar.markdown("""
@@ -225,6 +243,9 @@ if st.session_state.get('show_upload', False):
         except Exception as e:
             st.sidebar.error(f"❌ 文件处理失败: {str(e)}")
 
+if not show_sidebar_and_dashboard:
+    st.stop()
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📌 导航")
 page = st.sidebar.radio(
@@ -234,16 +255,26 @@ page = st.sidebar.radio(
 
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 🔧 筛选")
-all_audits = sorted(dept_stats['audit_name'].unique().tolist())
-selected_audits = st.sidebar.multiselect(
-    "选择审核场地",
-    all_audits,
-    default=all_audits
-)
+if len(dept_stats) > 0:
+    all_audits = sorted(dept_stats['audit_name'].unique().tolist())
+    selected_audits = st.sidebar.multiselect(
+        "选择审核场地",
+        all_audits,
+        default=all_audits
+    )
+else:
+    all_audits = []
+    selected_audits = []
 
 # 筛选数据
-filtered_findings = findings_df[findings_df['audit_name'].isin(selected_audits)]
-filtered_stats = dept_stats[dept_stats['audit_name'].isin(selected_audits)]
+if len(findings_df) > 0:
+    filtered_findings = findings_df[findings_df['audit_name'].isin(selected_audits)]
+else:
+    filtered_findings = pd.DataFrame()
+if len(dept_stats) > 0:
+    filtered_stats = dept_stats[dept_stats['audit_name'].isin(selected_audits)]
+else:
+    filtered_stats = pd.DataFrame()
 
 # ==================== 总览仪表板 ====================
 if page == "📈 总览仪表板":
@@ -507,7 +538,7 @@ elif page == "🔍 发现项分析":
     # 详细发现项列表
     st.markdown("<div class='sub-header'>审核发现项明细</div>", unsafe_allow_html=True)
     
-    detail_df = filtered_findings[['审核场次', '审核日期', '问题描述', '问题类别', '责任人', 
+    detail_df = filtered_findings[['审核场次', '发现日期', '问题描述', '问题类别', '责任人',
                                     'DueDate', 'Status']].copy()
     detail_df.columns = ['审核场次', '审核日期', '问题描述', '问题类别', '责任人', '预计完成日期', '状态']
     detail_df['审核日期'] = detail_df['审核日期'].dt.strftime('%Y-%m-%d')
@@ -663,7 +694,7 @@ elif page == "📝 开放问题清单":
         
         for audit_name, group in filtered_open.groupby('audit_name'):
             with st.expander(f"📁 {audit_name} ({len(group)} 项)", expanded=False):
-                detail_df = group[['审核场次', '审核日期', '问题描述', '问题类别', '责任人', 
+                detail_df = group[['审核场次', '发现日期', '问题描述', '问题类别', '责任人', 
                                     '原因分析及纠正措施', 'DueDate', 'Status']].copy()
                 detail_df.columns = ['审核场次', '审核日期', '问题描述', '问题类别', '责任人', 
                                      '纠正措施', '预计完成日期', '状态']

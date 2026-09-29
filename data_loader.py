@@ -113,8 +113,8 @@ def load_findings_data(filepath):
     """加载内审发现项跟进表"""
     df = pd.read_excel(filepath, sheet_name='query')
     
-    # 转换日期列
-    df['审核日期'] = pd.to_datetime(df['审核日期'], errors='coerce')
+    # 转换日期列（发现日期 = 审核日期）
+    df['发现日期'] = pd.to_datetime(df['发现日期'], errors='coerce')
     df['DueDate'] = pd.to_datetime(df['DueDate'], errors='coerce')
     
     # 添加映射信息
@@ -122,8 +122,8 @@ def load_findings_data(filepath):
     df['audit_name'] = df['审核场次'].map(lambda x: FINDING_TO_PLAN_MAP.get(x, {}).get('audit_name', x))
     df['lead_auditor'] = df['审核场次'].map(lambda x: FINDING_TO_PLAN_MAP.get(x, {}).get('lead_auditor', 'N/A'))
     
-    # 计算整改天数 (DueDate - 审核日期)
-    df['整改天数'] = (df['DueDate'] - df['审核日期']).dt.days
+    # 计算整改天数 (DueDate - 发现日期)
+    df['整改天数'] = (df['DueDate'] - df['发现日期']).dt.days
     
     # 标准化 Status
     df['Status'] = df['Status'].str.strip()
@@ -166,7 +166,7 @@ def compute_department_stats(findings_df):
             'median_days_closed': int(median_days) if median_days else None,
             'mean_days_closed': int(round(mean_days)) if mean_days else None,
             'median_due_days': int(median_due) if median_due else None,
-            'audit_date': group['审核日期'].min(),
+            'audit_date': group['发现日期'].min(),
         })
     
     return pd.DataFrame(stats)
@@ -175,7 +175,7 @@ def compute_department_stats(findings_df):
 def load_all_data(base_dir):
     """加载所有数据并返回（兼容旧接口）"""
     planning_file = os.path.join(base_dir, '2026 Audit Planning_V1_20260821.xlsx')
-    findings_file = os.path.join(base_dir, '2026内审发现项跟进表.xlsx')
+    findings_file = os.path.join(base_dir, '2026年内审发现跟进表.xlsx')
     return load_all_data_from_files(planning_file, findings_file)
 
 
@@ -233,7 +233,7 @@ def load_findings_from_uploaded_file(uploaded_file):
     df = pd.read_excel(uploaded_file, sheet_name='query')
     
     # 转换日期列
-    df['审核日期'] = pd.to_datetime(df['审核日期'], errors='coerce')
+    df['发现日期'] = pd.to_datetime(df['发现日期'], errors='coerce')
     df['DueDate'] = pd.to_datetime(df['DueDate'], errors='coerce')
     
     # 添加映射信息
@@ -242,13 +242,9 @@ def load_findings_from_uploaded_file(uploaded_file):
     df['lead_auditor'] = df['审核场次'].map(lambda x: FINDING_TO_PLAN_MAP.get(x, {}).get('lead_auditor', 'N/A'))
     
     # 计算整改天数
-    df['整改天数'] = (df['DueDate'] - df['审核日期']).dt.days
+    df['整改天数'] = (df['DueDate'] - df['发现日期']).dt.days
     
     # 标准化 Status
     df['Status'] = df['Status'].str.strip()
     
     return df
-    findings_df = load_findings_data(findings_file)
-    dept_stats = compute_department_stats(findings_df)
-    
-    return planning_df, findings_df, dept_stats

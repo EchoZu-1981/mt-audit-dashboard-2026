@@ -1,35 +1,24 @@
-# 🚀 Streamlit Cloud 部署步骤
+# 🚀 Streamlit Cloud 部署指南
 
-## ✅ 已完成准备
+## 概述
 
-项目已经准备好部署到 Streamlit Cloud：
-- ✅ `requirements.txt` - 依赖清单
-- ✅ `README.md` - 项目说明
-- ✅ `.gitignore` - 排除 Excel 文件和本地缓存
-- ✅ `app.py` - 支持无本地文件运行（通过上传功能）
+将 2026 内审看板部署到 Streamlit Cloud，其他人可通过链接直接访问，支持动态筛选和交互。
 
 ---
 
-## 📋 部署步骤
+## 📋 完整部署步骤
 
-### 第 1 步：安装 Git（如果未安装）
+### 第 1 步：安装 Git
 
-1. 访问 https://git-scm.com/download/win
-2. 下载并安装 Git for Windows
-3. 使用默认设置安装即可
+访问 https://git-scm.com/download/win，下载并安装 Git for Windows（默认设置即可）。
 
 ### 第 2 步：初始化 Git 仓库
 
-在 VS Code 终端中执行：
+在项目文件夹中打开 PowerShell，执行：
 
 ```powershell
-# 初始化 Git 仓库
 git init
-
-# 添加所有文件
 git add .
-
-# 提交
 git commit -m "Initial commit: 2026 Internal Audit Dashboard"
 ```
 
@@ -37,32 +26,25 @@ git commit -m "Initial commit: 2026 Internal Audit Dashboard"
 
 1. 访问 https://github.com/new
 2. 填写：
-   - **Repository name**: `mt-audit-dashboard-2026`（或其他名字）
+   - **Repository name**: `mt-audit-dashboard-2026`
    - **Description**: 2026 年内审数据看板
-   - **Visibility**: ⚠️ 建议选 **Private**（私有，保护数据）
+   - **Visibility**: 建议 **Private**（保护数据）
 3. 点击 **Create repository**
 
 ### 第 4 步：推送代码到 GitHub
 
-根据 GitHub 提示执行：
-
 ```powershell
-# 添加远程仓库（替换 your-username 为你的 GitHub 用户名）
-git remote add origin https://github.com/your-username/mt-audit-dashboard-2026.git
-
-# 重命名主分支
+git remote add origin https://github.com/你的用户名/mt-audit-dashboard-2026.git
 git branch -M main
-
-# 推送到 GitHub
 git push -u origin main
 ```
 
 ### 第 5 步：部署到 Streamlit Cloud
 
 1. 访问 https://share.streamlit.io/
-2. 点击 **"New app"** 或使用 GitHub 登录
-3. 授权 Streamlit 访问 GitHub
-4. 填写部署配置：
+2. 使用 GitHub 账号登录
+3. 点击 **"New app"**
+4. 填写配置：
    - **Repository**: 选择 `mt-audit-dashboard-2026`
    - **Branch**: `main`
    - **Main file path**: `app.py`
@@ -70,54 +52,40 @@ git push -u origin main
 
 ### 第 6 步：获取分享链接
 
-部署成功后，你会获得一个类似这样的 URL：
+部署成功后，你会获得 URL：
 ```
-https://mt-audit-dashboard-2026-your-username.streamlit.app
+https://mt-audit-dashboard-2026-你的用户名.streamlit.app
 ```
 
-### 第 7 步：首次使用
-
-1. 打开部署后的链接
-2. 点击侧边栏的 **"📁 上传文件"**
-3. 上传两个 Excel 文件：
-   - 审核计划表
-   - 发现项跟进表
-4. 数据将自动加载并显示
+**直接将这个链接发给其他人即可！** 打开链接就能看到完整的动态看板。
 
 ---
 
-## 🔄 更新代码
+## ✨ 功能说明
 
-当你修改代码后：
+部署后的看板支持：
+- ✅ **动态筛选**：按审核场次、状态筛选数据
+- ✅ **交互式图表**：悬停查看详情、点击筛选
+- ✅ **多视图切换**：总览/进度/发现项/时效/问题清单
+- ✅ **数据刷新**：侧边栏可上传更新文件
+- ✅ **数据已内置**：Excel 数据随代码一起部署，无需手动上传
+
+## 🔄 更新代码或数据
 
 ```powershell
-# 添加修改的文件
+# 修改代码或更新 data/ 下的 Excel 文件后
 git add .
-
-# 提交
-git commit -m "描述你的修改"
-
-# 推送
+git commit -m "更新描述"
 git push
 ```
 
-Streamlit Cloud 会自动重新部署（通常 1-2 分钟内完成）。
-
----
+Streamlit Cloud 会在 1-2 分钟内自动重新部署。
 
 ## ⚠️ 注意事项
 
-### 1. 数据安全
-- Excel 文件**不会**上传到 GitHub（已在 `.gitignore` 中排除）
-- 用户通过上传功能加载数据
-- 数据只保存在浏览器 session 中，不会持久化
-
-### 2. 仓库可见性
-- **Private 仓库**：需要 Streamlit Cloud 付费计划（$5/月）
-- **Public 仓库**：免费，但代码公开可见
-- 建议：代码本身不包含敏感数据，可以设为 Public
-
-### 3. 数据更新
+- **Private 仓库**需要 Streamlit Cloud 付费计划（$5/月），Public 仓库免费
+- `data/` 文件夹包含 Excel 数据，**如数据敏感请设为 Private 仓库**
+- 代码本身不含敏感凭证，设为 Public 也是安全的（只是数据文件会公开）
 每次访问需要重新上传文件，或者：
 - 方案 A：将 Excel 文件上传到 GitHub（不推荐，数据公开）
 - 方案 B：集成 SharePoint API（需要 IT 支持）
